@@ -1,0 +1,21 @@
+{
+  "_comment": "Fill this in only AFTER the user has reviewed the inventory and confirmed every entry. Lens keys must match the inventory exactly.",
+  "my_cameras": [
+    "iPhone 13 Pro Max",
+    "iPhone 15 Pro Max"
+  ],
+  "telephoto": [
+    "iPhone 13 Pro Max back triple camera 9mm f/2.8",
+    "iPhone 15 Pro Max back triple camera 15.66mm f/2.8"
+  ],
+  "ultrawide": [
+    "iPhone 13 Pro Max back triple camera 1.57mm f/1.8",
+    "iPhone 15 Pro Max back triple camera 2.22mm f/2.2"
+  ],
+  "front": [],
+  "crop_note_cameras": [
+    "iPhone 15 Pro Max"
+  ],
+  "overall_label": "All my telephoto phones",
+  "small_sample": 30
+}
