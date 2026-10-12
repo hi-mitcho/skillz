@@ -1,6 +1,6 @@
 ---
 name: photo-lens-usage
-description: Measure which camera lens someone actually uses (telephoto/zoom, ultra-wide, main) by reading their Apple Photos library on a Mac with osxphotos, strictly read-only. Reports telephoto and ultra-wide share per phone, per year, overall, and for favorites, with tested maths, sanity checks, a CSV, and optional editable SVG charts for social media. Use this whenever someone asks how often they use their zoom/telephoto/ultra-wide lens, whether they'd miss optical zoom, whether to buy a phone without a telephoto (or "Pro") camera, what focal lengths they shoot most, or wants lens or camera stats from their Photos library, even if they don't mention osxphotos.
+description: Measure which camera lens someone actually uses (telephoto/zoom, ultra-wide, main) by reading their Apple Photos library on a Mac with osxphotos, strictly read-only. Reports telephoto and ultra-wide share per phone, per year, overall, and for favorites, with tested maths, sanity checks, and a CSV. Use this whenever someone asks how often they use their zoom/telephoto/ultra-wide lens, whether they'd miss optical zoom, whether to buy a phone without a telephoto (or "Pro") camera, what focal lengths they shoot most, or wants lens or camera stats from their Photos library, even if they don't mention osxphotos.
 ---
 
 # Photo lens usage
@@ -26,8 +26,8 @@ photos are in Photos.
 - **Installs and system settings need consent.** Ask before installing anything; never
   change privacy or security settings yourself; tell the person how.
 
-Paths below: `SKILL_DIR` is this skill's folder. Write `config.json`, `inventory.csv` and
-`charts/` to the working folder, and the results CSV to the Desktop unless asked otherwise.
+Paths below: `SKILL_DIR` is this skill's folder. Write `config.json` and `inventory.csv`
+to the working folder, and the results CSV to the Desktop unless asked otherwise.
 
 ## Step 1: Tools
 
@@ -108,9 +108,7 @@ This lists every camera and lens key with photo counts and year ranges. Read
 
 Ask these together (a multiple-choice question tool helps), wait for answers, then write
 `config.json` (template: `assets/config.example.json`). Keys must match the inventory
-exactly. Put Pro phones with sensor-crop zoom in `crop_note_cameras`. Add short `labels`
-and `zoom` (e.g. `"5x"`) if charts are likely, and `chart_exclude_years` for partial years
-(e.g. the year a first telephoto phone arrived late), which otherwise look like spikes.
+exactly. Put Pro phones with sensor-crop zoom in `crop_note_cameras`.
 
 ## Step 5: Tests, then the real run
 
@@ -143,25 +141,3 @@ used the telephoto lens; among favorites it's 30%."* Then:
 - **Caveats, always:** crop zoom counts as main, so telephoto **undercounts** zooming;
   scope is "photos taken on these cameras", not "photos taken during these years"; videos
   are excluded; how many photos lacked lens data.
-
-## Step 7 (optional): Charts for social
-
-Offer this once the numbers are done.
-
-```bash
-python3 "$SKILL_DIR/scripts/make_charts.py" --csv ~/Desktop/lens_usage.csv --config config.json --out charts
-```
-
-This writes up to four 1080×1350 (4:5) SVGs: a headline stat with dot grids, telephoto by
-camera (all vs favorites), telephoto by year, and a lens mix (if ultra-wide is configured).
-Every element is a named layer with live text (Inter), ready to restyle in Figma
-(drag in) or Illustrator (File → Open).
-
-- **Look at them before handing over.** SVGs can hide overlapping labels. If Chrome is
-  installed, render previews:
-  `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars --window-size=1080,1350 --screenshot=out.png "file://$PWD/charts/1-headline.svg"`
-  (Quick Look crops to a square, so don't trust it for layout.) Fix collisions in the
-  script, not by hand.
-- Tell the person: restyle freely, but don't stretch bars by hand (that changes the numbers);
-  rerunning the script overwrites `charts/`, so duplicate files before styling.
-- If they need different content, edit `make_charts.py` rather than drawing bars manually.

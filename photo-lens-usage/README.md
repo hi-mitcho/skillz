@@ -8,7 +8,6 @@ A skill for answering "would I miss the zoom lens?" before buying a phone withou
 
 - Tables in the terminal: telephoto and ultra-wide share per camera, per year and overall, for all photos and for favorites.
 - A CSV with every number.
-- Optionally, four 1080×1350 SVG charts with named layers and live text, ready to restyle in Figma or Illustrator for social posts.
 
 The first run gave 24% telephoto across all photos and 30% for favorites. Telephoto was used about twice as often as ultra-wide.
 
@@ -30,7 +29,7 @@ Copy the `photo-lens-usage` folder into `~/.claude/skills/`. Then ask Claude som
 4. Lists every camera and lens in your library with photo counts and year ranges.
 5. Stops and asks you which cameras are yours and which lenses count as telephoto and ultra-wide. Lens names never say "telephoto"; lenses are told apart by focal length (for example, 15.66mm is the 5x on a 15 Pro Max). Your answers go in a `config.json`.
 6. Runs the unit tests on fake data, then runs on your library with sanity checks (per-camera and per-year totals must add up to the overall total).
-7. Reports the results, and makes charts if you want them.
+7. Reports the results, with caveats.
 
 ## Read-only
 
@@ -50,7 +49,6 @@ The skill only reads metadata. osxphotos works from a temporary copy of the Phot
 - `scripts/lens_usage.py`: inventory and report.
 - `scripts/test_lens_usage.py`: unit tests (`python3 -m unittest test_lens_usage` from `scripts/`).
 - `scripts/sample_fields.py`: prints raw camera fields for a sample of photos.
-- `scripts/make_charts.py`: SVG charts from the CSV.
 - `references/lens-hints.md`: observed iPhone lens strings and focal lengths.
 - `assets/config.example.json`: config template.
 
