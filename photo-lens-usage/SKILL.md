@@ -26,13 +26,31 @@ photos are in Photos.
 - **Installs and system settings need consent.** Ask before installing anything; never
   change privacy or security settings yourself; tell the person how.
 
-Paths below: `SKILL_DIR` is this skill's folder. Write `config.json` and `inventory.csv`
-to the working folder, and the results CSV to the Desktop unless asked otherwise.
+## Running commands
+
+Shell variables don't carry over between separate commands, so **start every command with
+these lines**, replacing `SKILL_DIR` with this skill's real folder path:
+
+```bash
+SKILL_DIR="/path/to/photo-lens-usage"
+OSX_PY="$(pipx environment --value PIPX_LOCAL_VENVS)/osxphotos/bin/python"
+OSXPHOTOS="$(pipx environment --value PIPX_BIN_DIR)/osxphotos"
+```
+
+`OSX_PY` is the Python inside the osxphotos install (the scripts need it); `OSXPHOTOS` works
+even before a new shell picks up `pipx ensurepath`. Don't `cd` into the skill folder; keep
+the working folder where it is. Write `config.json` and `inventory.csv` to the working
+folder, and the results CSV to the Desktop unless the person wants it elsewhere.
+
+Loading a large library takes a while (around a minute for 30,000 photos, longer for
+bigger ones), so give library commands a long timeout. If the person's library isn't the
+default one, add `--library "/path/to/Library.photoslibrary"` to every script command.
 
 ## Step 1: Tools
 
-Check: `which pipx osxphotos python3`. If missing, show the person the commands, explain
-each in one line, and wait for an OK:
+Check: `which brew pipx; ls "$(pipx environment --value PIPX_BIN_DIR 2>/dev/null)/osxphotos"`.
+If anything is missing, show the person the commands, explain each in one line, and wait
+for an OK:
 
 ```bash
 brew install pipx
@@ -40,22 +58,20 @@ pipx ensurepath
 pipx install osxphotos
 ```
 
+No Homebrew? Its installer asks for the person's password, so they run it themselves from
+https://brew.sh, then you continue.
+
 If `pipx install` fails with *"pipx needs uv>=…, but … uv reports …"*, an old `uv` installer
 is on the PATH. Fix it without touching uv: `pipx install osxphotos --backend pip`.
 
-The scripts need the Python that lives inside the osxphotos environment:
-
-```bash
-OSX_PY="$(pipx environment --value PIPX_LOCAL_VENVS)/osxphotos/bin/python"
-```
-
 ## Step 2: Permission to read the library
 
-Test with `osxphotos query --count`. Two errors both mean macOS privacy protection is
+Test with `"$OSXPHOTOS" query --count`. Two errors both mean macOS privacy protection is
 blocking access: **"Operation not permitted"** on `Photos.sqlite`, or **"Could not get path
 to photo library database"** (osxphotos can't even read which library is the system one).
 osxphotos may also write `osxphotos_crash.log` to the working folder; delete it after
-reading. Confirm with `head -c 4 ~/Pictures/*.photoslibrary/database/Photos.sqlite`. The person must grant
+reading. Confirm with `head -c 4 ~/Pictures/*.photoslibrary/database/Photos.sqlite`
+(default library location). The person must grant
 **Full Disk Access** in System Settings → Privacy & Security → Full Disk Access, then
 restart the app.
 
@@ -71,11 +87,10 @@ In the Claude desktop app, commands run under an inner `claude.app` inside
 "disclaimer" helper, so it needs its **own** Full Disk Access entry (+ button, ⌘⇧G, paste the
 path). The path contains a version number, so **after any Claude update the new inner app
 needs adding again**. If it worked last week and fails now, check the version in the
-process chain first. In
-Terminal or iTerm, grant it to that terminal app. Mention that the person can switch it off
+process chain first. In Terminal or iTerm, grant it to that terminal app. Mention that the person can switch it off
 again afterwards.
 
-Once it works, report total items and photos only (`--only-photos --count`).
+Once it works, report total items and photos only (`"$OSXPHOTOS" query --only-photos --count`).
 
 ## Step 3: Sample real fields
 
@@ -102,18 +117,23 @@ This lists every camera and lens key with photo counts and year ranges. Read
 2. **Proposed telephoto and ultra-wide lens keys** as a table per camera with counts. Group
    all descriptor variants of the same mm value. Explain that the word "telephoto" never
    appears and lenses are told apart by mm.
-3. **Defaults to confirm:** selfies (front camera) are counted but left out of percentages,
+3. **Cameras without lens names** (common on Android and standalone cameras) appear as
+   `<model> @ <focal>mm`. Propose shortest = ultra-wide and longest = telephoto per camera,
+   and ask which focal length is the selfie camera, since it can't be detected
+   automatically. Those go in the `front` list.
+4. **Defaults to confirm:** selfies (front camera) are counted but left out of percentages,
    since every phone has a front camera; crop modes (2x on 14 Pro and later, 8x on 17 Pro)
    are not separate lenses.
 
 Ask these together (a multiple-choice question tool helps), wait for answers, then write
 `config.json` (template: `assets/config.example.json`). Keys must match the inventory
-exactly. Put Pro phones with sensor-crop zoom in `crop_note_cameras`.
+exactly; copy them from `inventory.csv` rather than retyping. Put Pro phones with
+sensor-crop zoom (14 Pro and later) in `crop_note_cameras`.
 
 ## Step 5: Tests, then the real run
 
 ```bash
-cd "$SKILL_DIR/scripts" && python3 -m unittest test_lens_usage -v
+"$OSX_PY" -B -m unittest discover -s "$SKILL_DIR/scripts" -p "test_*.py" -v
 ```
 
 All should pass; show the person. If one fails, stop and explain; don't run on real data.
@@ -123,6 +143,8 @@ Then:
 "$OSX_PY" "$SKILL_DIR/scripts/lens_usage.py" report --config config.json --out ~/Desktop/lens_usage.csv
 ```
 
+If it prints **config warnings**, a name in `config.json` doesn't match the library (usually
+a typo). Fix those first, because an unmatched telephoto lens silently counts as main.
 The script prints per-camera, per-year and overall tables for all photos and favorites,
 runs sanity checks (per-camera and per-year totals equal the overall total; buckets add up;
 overall equals a direct count), and saves the CSV. If any sanity check fails, stop and
@@ -138,6 +160,10 @@ used the telephoto lens; among favorites it's 30%."* Then:
 - What it means for the decision: trends as zoom reach changed, whether favorites lean
   telephoto, and what share a phone without a telephoto (main + ultra-wide) would still
   cover (100% − telephoto %).
+- Where the CSV is (`~/Desktop/lens_usage.csv` by default) and that it opens in Numbers or
+  Excel: one row per camera, per year and overall, for `all` photos and `favorites`, with
+  photo counts and percentages for telephoto, ultra-wide and main, plus selfies and
+  missing-lens counts.
 - **Caveats, always:** crop zoom counts as main, so telephoto **undercounts** zooming;
   scope is "photos taken on these cameras", not "photos taken during these years"; videos
   are excluded; how many photos lacked lens data.

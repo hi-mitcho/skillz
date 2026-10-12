@@ -4,8 +4,11 @@ READ-ONLY: osxphotos reads a temporary copy of the Photos database. This script
 only reads metadata. It never exports, edits, or deletes photos.
 
 Usage (run with the Python inside the osxphotos pipx environment):
-    python lens_usage.py inventory [--out inventory.csv]
-    python lens_usage.py report --config config.json [--out ~/Desktop/lens_usage.csv]
+    python lens_usage.py inventory [--out inventory.csv] [--library PATH]
+    python lens_usage.py report --config config.json [--out ~/Desktop/lens_usage.csv] [--library PATH]
+
+--library is only needed when the Photos library isn't the system library
+(path to a .photoslibrary bundle).
 
 A "lens key" identifies a lens: the EXIF lens string when the camera records one,
 otherwise "<camera model> @ <focal length>mm". config.json lists which lens keys
@@ -27,12 +30,13 @@ REAR = (TELEPHOTO, ULTRA_WIDE, MAIN)
 
 # ---------------------------------------------------------------- reading
 
-def load_records():
+def load_records(library=None):
     """Read photos (no videos) from the Photos library into plain dicts."""
     import osxphotos  # imported here so tests run without a Photos library
 
+    db = osxphotos.PhotosDB(dbfile=str(library)) if library else osxphotos.PhotosDB()
     records = []
-    for p in osxphotos.PhotosDB().photos(movies=False):
+    for p in db.photos(movies=False):
         exif = p.exif_info
         records.append({
             "camera_make": (exif.camera_make if exif else None) or MISSING,
@@ -104,6 +108,27 @@ def inventory(records):
              "first_year": min(years[(cam, lens)]), "last_year": max(years[(cam, lens)])}
             for (cam, lens), n in counts.items()]
     return sorted(rows, key=lambda r: (r["camera"], -r["photos"]))
+
+
+def config_warnings(records, config):
+    """Catch config typos before they silently skew results. Returns readable warnings."""
+    warnings = []
+    cameras_seen = {resolve_model(r) for r in records}
+    keys_seen = {lens_key(r) for r in records}
+    for cam in config.get("my_cameras", []):
+        if cam not in cameras_seen:
+            warnings.append(f"my_cameras: '{cam}' doesn't match any camera in the library")
+    for bucket in ("telephoto", "ultrawide", "front"):
+        for key in config.get(bucket, []):
+            if key not in keys_seen:
+                warnings.append(f"{bucket}: '{key}' doesn't match any lens in the library")
+    listed = {}
+    for bucket in ("telephoto", "ultrawide", "front"):
+        for key in config.get(bucket, []):
+            if key in listed:
+                warnings.append(f'"{key}" is listed under both {listed[key]} and {bucket}')
+            listed.setdefault(key, bucket)
+    return warnings
 
 
 def build_report(records, config):
@@ -212,9 +237,20 @@ def main(argv=None):
     rep = sub.add_parser("report")
     rep.add_argument("--config", type=Path, required=True)
     rep.add_argument("--out", type=Path, default=Path.home() / "Desktop" / "lens_usage.csv")
+    for p in (inv, rep):
+        p.add_argument("--library", type=Path, help="path to a .photoslibrary (default: system library)")
     args = ap.parse_args(argv)
 
-    records = load_records()
+    if args.command == "report":
+        config = json.loads(args.config.read_text())
+        if not config.get("my_cameras"):
+            print('config.json needs a non-empty "my_cameras" list. Copy the names from the inventory.')
+            return 1
+
+    records = load_records(args.library.expanduser() if args.library else None)
+    if not records:
+        print("No photos found in the library.")
+        return 1
     if args.command == "inventory":
         rows = inventory(records)
         print_inventory(records, rows)
@@ -222,7 +258,11 @@ def main(argv=None):
         print(f"\nSaved {len(rows)} rows to {args.out}")
         return 0
 
-    config = json.loads(args.config.read_text())
+    warnings = config_warnings(records, config)
+    if warnings:
+        print("\nConfig warnings (check for typos against the inventory):")
+        for w in warnings:
+            print(f"  ! {w}")
     rows = build_report(records, config)
     if not rows:
         print("No photos matched my_cameras in the config. Check the names against the inventory.")

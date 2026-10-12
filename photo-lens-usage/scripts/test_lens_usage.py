@@ -7,7 +7,7 @@ import unittest
 
 from lens_usage import (
     FRONT, MAIN, MISSING, NO_LENS, TELEPHOTO, ULTRA_WIDE,
-    build_report, classify, inventory, lens_key, resolve_model, sanity_failures, share,
+    build_report, classify, config_warnings, inventory, lens_key, resolve_model, sanity_failures, share,
 )
 
 P15_TELE = "iPhone 15 Pro Max back triple camera 15.66mm f/2.8"
@@ -115,6 +115,21 @@ class TestPieces(unittest.TestCase):
         self.assertEqual(sum(r["photos"] for r in rows), len(FAKE))
         seven = [r for r in rows if r["camera"] == "iPhone 7 Plus" and r["lens_key"] == P7_TELE]
         self.assertEqual(seven[0]["photos"], 2)  # generic "iPhone" merged in
+
+
+class TestConfigWarnings(unittest.TestCase):
+    def test_good_config_has_no_warnings(self):
+        self.assertEqual(config_warnings(FAKE, CONFIG), [])
+
+    def test_typos_and_duplicates_are_caught(self):
+        bad = dict(CONFIG, my_cameras=CONFIG["my_cameras"] + ["iPhone 15 Pro Maxx"],
+                   telephoto=CONFIG["telephoto"] + ["iPhone 15 Pro Max back triple camera 15.6mm f/2.8"],
+                   ultrawide=CONFIG["ultrawide"] + [P15_TELE])
+        warnings = config_warnings(FAKE, bad)
+        self.assertEqual(len(warnings), 3)
+        self.assertTrue(any("iPhone 15 Pro Maxx" in w for w in warnings))
+        self.assertTrue(any("15.6mm" in w for w in warnings))
+        self.assertTrue(any("both telephoto and ultrawide" in w for w in warnings))
 
 
 class TestReport(unittest.TestCase):
