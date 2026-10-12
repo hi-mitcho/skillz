@@ -1,4 +1,4 @@
-# photo-lens-usage
+# zoomies
 
 A skill for answering "would I miss the zoom lens?" before buying a phone without one. It reads your Apple Photos library and works out what share of your photos used the telephoto, ultra-wide and main lens, per phone, per year, overall, and for favorites only.
 
@@ -20,13 +20,13 @@ The first run gave 24% telephoto across all photos and 30% for favorites. Teleph
 
 ## Install
 
-The easiest way is to ask Claude Code to do it: "Install the photo-lens-usage skill from https://github.com/hi-mitcho/skillz into ~/.claude/skills".
+The easiest way is to ask Claude Code to do it: "Install the zoomies skill from https://github.com/hi-mitcho/skillz into ~/.claude/skills".
 
 Or in Terminal:
 
 ```bash
 git clone https://github.com/hi-mitcho/skillz.git /tmp/skillz
-mkdir -p ~/.claude/skills && cp -R /tmp/skillz/photo-lens-usage ~/.claude/skills/
+mkdir -p ~/.claude/skills && cp -R /tmp/skillz/zoomies ~/.claude/skills/
 ```
 
 Start a new Claude Code session, then ask something like "how often do I actually use my telephoto lens?" or "would I miss optical zoom on my next phone?"
