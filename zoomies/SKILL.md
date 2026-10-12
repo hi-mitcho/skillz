@@ -1,9 +1,9 @@
 ---
-name: photo-lens-usage
+name: zoomies
 description: Measure which camera lens someone actually uses (telephoto/zoom, ultra-wide, main) by reading their Apple Photos library on a Mac with osxphotos, strictly read-only. Reports telephoto and ultra-wide share per phone, per year, overall, and for favorites, with tested maths, sanity checks, and a CSV. Use this whenever someone asks how often they use their zoom/telephoto/ultra-wide lens, whether they'd miss optical zoom, whether to buy a phone without a telephoto (or "Pro") camera, what focal lengths they shoot most, or wants lens or camera stats from their Photos library, even if they don't mention osxphotos.
 ---
 
-# Photo lens usage
+# Zoomies
 
 Answer "which lens do I actually use?" from a person's own Apple Photos library, so a
 phone-buying decision rests on real data. Works for iPhones and any other camera whose
@@ -32,7 +32,7 @@ Shell variables don't carry over between separate commands, so **start every com
 these lines**, replacing `SKILL_DIR` with this skill's real folder path:
 
 ```bash
-SKILL_DIR="/path/to/photo-lens-usage"
+SKILL_DIR="/path/to/zoomies"
 OSX_PY="$(pipx environment --value PIPX_LOCAL_VENVS)/osxphotos/bin/python"
 OSXPHOTOS="$(pipx environment --value PIPX_BIN_DIR)/osxphotos"
 ```
