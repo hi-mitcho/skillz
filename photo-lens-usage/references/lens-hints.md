@@ -49,3 +49,9 @@ lens model, many record only a focal length. When `lens_model` is missing,
 lengths per camera (shortest = ultra-wide, longest = telephoto, as a starting
 proposal), and have the user confirm. Don't assume specific values for non-Apple
 devices; check the inventory every time.
+
+Cameras with a **zoom lens** (most compacts, and DSLRs with zoom lenses) record a different
+focal length for almost every shot, e.g. `C3030Z @ 6.60mm`, `@ 8.50mm`, `@ 10.70mm`. That's
+one lens across a range, not separate lenses, so this skill's telephoto / ultra-wide split
+doesn't fit them well. Usually leave such cameras out of `my_cameras`; if the person wants
+them in, agree on a focal-length cut-off and list the matching keys.
