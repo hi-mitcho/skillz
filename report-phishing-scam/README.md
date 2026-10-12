@@ -1,6 +1,6 @@
 # report-phishing-scam
 
-A skill for reporting phishing and scam attempts.
+A skill for reporting phishing and scam attempts. Goal: notify the offenders' registrar and host of their spammy behavior. Hopefully become really annoying to the spammers.
 
 ⚠️ **Status**: Untested — this is a good idea at this point, but hasn't been validated yet.
 
